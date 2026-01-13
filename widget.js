@@ -1,11 +1,12 @@
-<script>
+//  READ CONFIG FROM SCRIPT TAG
+// ===============================
 const scriptTag = document.currentScript;
 
 const WEBHOOK_URL = scriptTag.dataset.webhook;
 const BRAND_COLOR = scriptTag.dataset.brandColor || "#8b5cf6";
 const AGENT_NAME  = scriptTag.dataset.agentName || "Clinical Assistant";
 const WELCOME_MSG = scriptTag.dataset.welcome ||
-  "Hi, I'm the Clinical Assistant. Ask me anything about patient data.";
+  "Hi, I'm the iHealth Agent. I've ingested your clinic's faxes. Ask me anything about patient data.";
 
 // ===============================
 //  WIDGET HTML
@@ -25,23 +26,25 @@ const widgetHTML = `
           <span class="status-dot"></span> RAG Pipeline Active
         </div>
       </div>
-      <div class="header-buttons">
-        <button id="view-history">View History</button>
-        <button id="clear-chat">Clear</button>
-        <button class="close-btn">×</button>
-      </div>
+      <button class="close-btn">×</button>
     </div>
 
     <div class="chat-messages" id="chat-msgs">
       <div class="msg msg-ai">${WELCOME_MSG}</div>
     </div>
 
-    <div class="typing" id="typing" style="display:none;">Processing…</div>
-
     <div class="chat-input">
-      <input type="text" id="user-input" placeholder="Type your question…" autocomplete="off" />
+      <input
+        type="text"
+        id="user-input"
+        placeholder="Type your question…"
+        autocomplete="off"
+      />
       <button id="send-btn">➤</button>
     </div>
+
+    <div class="typing" id="typing" style="display:none;">Processing…</div>
+
   </div>
 </div>
 `;
@@ -64,45 +67,69 @@ function injectStyles() {
   style.innerHTML = `
   :root { --brand-purple: ${BRAND_COLOR}; }
 
-  #ai-widget, #ai-widget * { box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; pointer-events: auto !important; }
+  #ai-widget, #ai-widget * { box-sizing: border-box; font-family: Inter, system-ui, sans-serif; pointer-events: auto !important; }
 
   #chat-trigger {
     position: fixed; bottom: 30px; right: 30px;
-    background: var(--brand-purple); color: #fff; border: none;
-    padding: 14px 22px; border-radius: 50px; font-weight: 700; cursor: pointer; z-index: 999999;
+    background: var(--brand-purple);
+    color: #fff; border: none; padding: 14px 22px;
+    border-radius: 50px; font-weight: 700; cursor: pointer; z-index: 999999;
   }
 
   #chat-window {
     position: fixed; bottom: 90px; right: 30px;
     width: 420px; height: 600px; background: #020617;
     border-radius: 24px; display: none; flex-direction: column;
-    box-shadow: 0 25px 60px rgba(0,0,0,0.5); z-index: 999999; overflow: hidden;
+    box-shadow: 0 25px 60px rgba(0,0,0,0.5); z-index: 999999;
+    overflow: hidden;
   }
 
   .chat-header {
-    padding: 16px 20px; display: flex; justify-content: space-between; align-items: center;
+    padding: 16px 20px; display: flex;
+    justify-content: space-between; align-items: center;
     color: #f8fafc; border-bottom: 1px solid rgba(255,255,255,0.1);
   }
 
   .chat-header h4 { margin: 0; font-weight: 700; }
+
   .status-line { font-size: 11px; color: #94a3b8; }
+
   .status-dot { width: 8px; height: 8px; background: #10b981; border-radius: 50%; display: inline-block; margin-right: 6px; }
 
-  .header-buttons { display: flex; gap: 6px; }
-  .header-buttons button { background: none; border: none; color: white; cursor: pointer; font-size: 13px; padding: 2px 6px; border-radius: 6px; }
-  .header-buttons button:hover { background: rgba(255,255,255,0.1); }
+  .chat-messages {
+    flex: 1; padding: 16px; overflow-y: auto;
+    display: flex; flex-direction: column; gap: 12px;
+  }
 
-  .chat-messages { flex: 1; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; background: #121827; }
-  .msg { padding: 10px 14px; border-radius: 16px; font-size: 14px; max-width: 80%; word-wrap: break-word; }
+  .msg { padding: 10px 14px; border-radius: 16px; font-size: 14px; max-width: 80%; line-height: 1.5; }
+
   .msg-ai { background: #1e293b; color: #f8fafc; align-self: flex-start; }
+
   .msg-user { background: var(--brand-purple); color: #fff; align-self: flex-end; }
+
   .typing { font-size: 12px; color: #94a3b8; padding: 4px 16px; user-select: none; }
 
-  .chat-input { display: flex; gap: 10px; padding: 16px; border-top: 1px solid rgba(255,255,255,0.1); }
-  .chat-input input { flex: 1; padding: 12px 16px; border-radius: 24px; border: 1px solid #334155; outline: none; background: #0f172a; color: #fff; caret-color: #fff; font-size: 14px; }
+  .chat-input {
+    display: flex; gap: 10px; padding: 16px; border-top: 1px solid rgba(255,255,255,0.1);
+    z-index: 2; position: relative;
+  }
+
+  .chat-input input {
+    flex: 1; padding: 12px 16px; border-radius: 24px;
+    border: 1px solid #334155; outline: none;
+    background: #0f172a; color: #fff; caret-color: #fff; font-size: 14px;
+    z-index: 2; position: relative;
+  }
+
   .chat-input input::placeholder { color: #94a3b8; }
+
   .chat-input input:focus { border-color: var(--brand-purple); }
-  .chat-input button { width: 42px; height: 42px; border-radius: 50%; background: var(--brand-purple); color: #fff; border: none; cursor: pointer; }
+
+  .chat-input button {
+    width: 42px; height: 42px; border-radius: 50%;
+    background: var(--brand-purple); color: #fff; border: none; cursor: pointer;
+    z-index: 2; position: relative;
+  }
   `;
   document.head.appendChild(style);
 }
@@ -118,29 +145,13 @@ function setupWidgetLogic() {
   const typing = document.getElementById("typing");
   const input = document.getElementById("user-input");
   const sendBtn = document.getElementById("send-btn");
-  const viewHistoryBtn = document.getElementById("view-history");
-  const clearBtn = document.getElementById("clear-chat");
 
   trigger.onclick = () => {
-    chatWindow.style.display = chatWindow.style.display === 'flex' ? 'none' : 'flex';
+    chatWindow.style.display = "flex";
     setTimeout(() => input.focus(), 50);
   };
 
   closeBtn.onclick = () => chatWindow.style.display = "none";
-
-  viewHistoryBtn.onclick = () => {
-    if (msgs.style.display === "none") {
-      msgs.style.display = "flex";
-      viewHistoryBtn.textContent = "Hide History";
-    } else {
-      msgs.style.display = "none";
-      viewHistoryBtn.textContent = "View History";
-    }
-  };
-
-  clearBtn.onclick = () => {
-    msgs.innerHTML = `<div class="msg msg-ai">${WELCOME_MSG}</div>`;
-  };
 
   sendBtn.onclick = sendMessage;
   input.addEventListener("keydown", e => e.key === "Enter" && sendMessage());
@@ -168,10 +179,12 @@ function setupWidgetLogic() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query: text })
       });
+
       const data = await res.json();
       typing.style.display = "none";
       append("ai", data.output || "Response received.");
       setTimeout(() => input.focus(), 50);
+
     } catch (e) {
       typing.style.display = "none";
       append("ai", "Error connecting to server.");
@@ -179,4 +192,3 @@ function setupWidgetLogic() {
     }
   }
 }
-</script>
