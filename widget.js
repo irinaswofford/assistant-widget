@@ -16,16 +16,13 @@ const widgetHTML = `
 <div id="ai-widget">
 
   <button id="chat-trigger">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-    </svg>
-    Clinical Assistant
+    💬 ${AGENT_NAME}
   </button>
 
   <div id="chat-window">
     <div class="chat-header">
       <div>
-        <h4>iHealth Agent</h4>
+        <h4>${AGENT_NAME}</h4>
         <div class="status-line">
           <span class="status-dot"></span> RAG Pipeline Active
         </div>
@@ -37,21 +34,16 @@ const widgetHTML = `
       <div class="msg msg-ai">${WELCOME_MSG}</div>
     </div>
 
-    <div class="typing" id="typing">Processing …</div>
+    <div class="typing" id="typing">Processing…</div>
 
     <div class="chat-input">
       <input
         type="text"
         id="user-input"
-        placeholder="e.g., What is the patient's Member ID?"
+        placeholder="Type your question…"
         autocomplete="off"
       />
-      <button id="send-btn">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-          <line x1="22" y1="2" x2="11" y2="13"></line>
-          <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-        </svg>
-      </button>
+      <button id="send-btn">➤</button>
     </div>
   </div>
 
@@ -59,20 +51,29 @@ const widgetHTML = `
 `;
 
 // ===============================
-//  DOM INJECTION
+//  SAFE DOM INJECTION
 // ===============================
-document.body.insertAdjacentHTML("beforeend", widgetHTML);
-injectStyles();
-setupWidgetLogic();
+(function waitForBody() {
+  if (!document.body) return setTimeout(waitForBody, 50);
+  document.body.insertAdjacentHTML("beforeend", widgetHTML);
+  injectStyles();
+  setupWidgetLogic();
+})();
 
 // ===============================
-//  STYLES
+//  STYLES (FIXED INPUT ISSUE)
 // ===============================
 function injectStyles() {
   const style = document.createElement("style");
   style.innerHTML = `
   :root {
     --brand-purple: ${BRAND_COLOR};
+  }
+
+  #ai-widget, #ai-widget * {
+    box-sizing: border-box;
+    pointer-events: auto !important;
+    font-family: Inter, system-ui, sans-serif;
   }
 
   #chat-trigger {
@@ -82,49 +83,45 @@ function injectStyles() {
     background: var(--brand-purple);
     color: #fff;
     border: none;
-    padding: 16px 28px;
+    padding: 14px 22px;
     border-radius: 50px;
     font-weight: 700;
     cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 10px;
     z-index: 999999;
   }
 
   #chat-window {
     position: fixed;
-    bottom: 100px;
+    bottom: 90px;
     right: 30px;
     width: 420px;
     height: 600px;
-    background: #fff;
+    background: #020617;
     border-radius: 24px;
     display: none;
     flex-direction: column;
-    box-shadow: 0 25px 60px rgba(0,0,0,0.2);
+    box-shadow: 0 25px 60px rgba(0,0,0,0.5);
     z-index: 999999;
     overflow: hidden;
   }
 
   .chat-header {
-    padding: 20px 25px;
-    background: #ffffff;
-    border-bottom: 1px solid #f1f5f9;
+    padding: 16px 20px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    color: #1e1b4b;
+    color: #f8fafc;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
   }
 
   .chat-header h4 {
     margin: 0;
-    font-weight: 800;
+    font-weight: 700;
   }
 
   .status-line {
     font-size: 11px;
-    color: #64748b;
+    color: #94a3b8;
   }
 
   .status-dot {
@@ -133,31 +130,29 @@ function injectStyles() {
     background: #10b981;
     border-radius: 50%;
     display: inline-block;
-    margin-right: 5px;
+    margin-right: 6px;
   }
 
   .chat-messages {
     flex: 1;
-    padding: 20px;
+    padding: 16px;
     overflow-y: auto;
-    background: #fcfcfd;
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    gap: 12px;
   }
 
   .msg {
-    max-width: 85%;
-    padding: 12px 16px;
+    padding: 10px 14px;
     border-radius: 16px;
     font-size: 14px;
+    max-width: 80%;
     line-height: 1.5;
   }
 
   .msg-ai {
-    background: #ffffff;
-    color: #1e293b;
-    border: 1px solid #e5e7eb;
+    background: #1e293b;
+    color: #f8fafc;
     align-self: flex-start;
   }
 
@@ -167,19 +162,37 @@ function injectStyles() {
     align-self: flex-end;
   }
 
+  .typing {
+    display: none;
+    font-size: 12px;
+    color: #94a3b8;
+    padding: 0 16px;
+  }
+
   .chat-input {
-    padding: 20px;
-    border-top: 1px solid #f1f5f9;
     display: flex;
     gap: 10px;
+    padding: 16px;
+    border-top: 1px solid rgba(255,255,255,0.1);
   }
 
   .chat-input input {
     flex: 1;
-    border: 2px solid #f1f5f9;
-    padding: 12px 20px;
-    border-radius: 12px;
+    padding: 12px 16px;
+    border-radius: 24px;
+    border: 1px solid #334155;
     outline: none;
+
+    /* 🔑 FIX */
+    background: #0f172a;
+    color: #ffffff;
+    caret-color: #ffffff;
+    font-size: 14px;
+  }
+
+  .chat-input input::placeholder {
+    color: #94a3b8;
+    opacity: 1;
   }
 
   .chat-input input:focus {
@@ -187,20 +200,13 @@ function injectStyles() {
   }
 
   .chat-input button {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
     background: var(--brand-purple);
-    border: none;
     color: #fff;
-    width: 45px;
-    height: 45px;
-    border-radius: 12px;
+    border: none;
     cursor: pointer;
-  }
-
-  .typing {
-    display: none;
-    font-size: 12px;
-    color: #94a3b8;
-    margin-left: 20px;
   }
   `;
   document.head.appendChild(style);
@@ -223,7 +229,9 @@ function setupWidgetLogic() {
     setTimeout(() => input.focus(), 50);
   };
 
-  closeBtn.onclick = () => chatWindow.style.display = "none";
+  closeBtn.onclick = () => {
+    chatWindow.style.display = "none";
+  };
 
   sendBtn.onclick = sendMessage;
   input.onkeydown = e => e.key === "Enter" && sendMessage();
@@ -256,7 +264,7 @@ function setupWidgetLogic() {
       append("ai", data.output || "Response received.");
       setTimeout(() => input.focus(), 50);
 
-    } catch {
+    } catch (e) {
       typing.style.display = "none";
       append("ai", "Error connecting to server.");
       setTimeout(() => input.focus(), 50);
