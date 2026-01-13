@@ -10,7 +10,15 @@ const WELCOME_MSG = scriptTag.dataset.welcome ||
   "Hi, I'm the Clinical Assistant. Ask me anything about patient data.";
 const CLIENT_KEY  = scriptTag.dataset.clientKey;   // ← NEW
 
-
+// ===============================
+//  SESSION ID (randomUUID)
+// ===============================
+const SESSION_KEY = "clinical_assistant_session_id";
+let sessionId = localStorage.getItem(SESSION_KEY);
+if (!sessionId) {
+  sessionId = crypto.randomUUID();   // generate unique session ID
+  localStorage.setItem(SESSION_KEY, sessionId);
+}
 
 // ===============================
 //  WIDGET HTML
@@ -206,33 +214,34 @@ function setupWidgetLogic() {
     history.push({role,text});
   }
 
-
   async function sendMessage(){
-  const text = input.value.trim();
-  if(!text) return;
-  append("user", text);
-  input.value = '';
-  typing.style.display = "block";
+    const text = input.value.trim();
+    if(!text) return;
+    append("user", text);
+    input.value = '';
+    typing.style.display = "block";
 
-  try {
-    const res = await fetch(WEBHOOK_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${CLIENT_KEY}`  // add your client key here
-      },
-      body: JSON.stringify({ query: text })
-    });
+    try {
+      const res = await fetch(WEBHOOK_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${CLIENT_KEY}` // keep authorization
+        },
+        body: JSON.stringify({
+          query: text,
+          sessionId: sessionId    // <-- add session ID here
+        })
+      });
 
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
-    typing.style.display = "none";
-    append("ai", data.output || "No response from server.");
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      typing.style.display = "none";
+      append("ai", data.output || "No response from server.");
 
-  } catch(e) {
-    typing.style.display = "none";
-    append("ai", `Error connecting to server: ${e.message}`);
+    } catch(e) {
+      typing.style.display = "none";
+      append("ai", `Error connecting to server: ${e.message}`);
+    }
   }
-}
-
 }
