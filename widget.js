@@ -9,7 +9,7 @@ const AGENT_NAME   = scriptTag.dataset.agentName || "AI Assistant";
 const LOGO_URL     = scriptTag.dataset.logo || null;
 const WELCOME_MSG  = scriptTag.dataset.welcome || "Hello! How can I help you today?";
 const THEME        = scriptTag.dataset.theme || "light";
-const WEBHOOK_URL  = scriptTag.dataset.webhook;   // ⭐ dynamic webhook
+const WEBHOOK_URL  = scriptTag.dataset.webhook;
 
 // ===============================
 //  WIDGET HTML TEMPLATE
@@ -48,12 +48,26 @@ const widgetHTML = `
 `;
 
 // ===============================
-//  SAFE DOM INJECTION (Streamlit fix)
+//  WAIT FOR BODY (Streamlit Fix)
 // ===============================
-function initWidget() {
-    document.body.insertAdjacentHTML("beforeend", widgetHTML);
+function waitForBody(callback) {
+    if (document.body) {
+        callback();
+    } else {
+        setTimeout(() => waitForBody(callback), 50);
+    }
+}
 
-    // Inject CSS
+waitForBody(() => {
+    document.body.insertAdjacentHTML("beforeend", widgetHTML);
+    injectStyles();
+    setupWidgetLogic();
+});
+
+// ===============================
+//  INJECT CSS
+// ===============================
+function injectStyles() {
     const style = document.createElement("style");
     style.innerHTML = `
     #chat-trigger {
@@ -124,18 +138,13 @@ function initWidget() {
     `;
     document.head.appendChild(style);
 
-    setupWidgetLogic();
-}
-
-// Wait for DOM (fixes Streamlit iframe)
-if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", initWidget);
-} else {
-    initWidget();
+    if (THEME === "dark") document.documentElement.classList.add("ai-dark");
+    if (THEME === "auto" && window.matchMedia("(prefers-color-scheme: dark)").matches)
+        document.documentElement.classList.add("ai-dark");
 }
 
 // ===============================
-//  WIDGET LOGIC (runs AFTER injection)
+//  WIDGET LOGIC
 // ===============================
 function setupWidgetLogic() {
     const chatWindow = document.getElementById("chat-window");
