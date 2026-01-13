@@ -202,4 +202,8 @@ function setupWidgetLogic() {
 
             appendMessage("ai", data.output || "No response.");
         } catch {
-            typingLabel.style.display
+            typingLabel.style.display = "none";
+            appendMessage("ai", "Error connecting to server.");
+        }
+    }
+}
