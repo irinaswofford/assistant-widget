@@ -8,6 +8,9 @@ const BRAND_COLOR = scriptTag.dataset.brandColor || "#8b5cf6";
 const AGENT_NAME  = scriptTag.dataset.agentName || "Clinical Assistant";
 const WELCOME_MSG = scriptTag.dataset.welcome ||
   "Hi, I'm the Clinical Assistant. Ask me anything about patient data.";
+const CLIENT_KEY  = scriptTag.dataset.clientKey;   // ← NEW
+
+
 
 // ===============================
 //  WIDGET HTML
