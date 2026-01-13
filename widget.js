@@ -206,26 +206,33 @@ function setupWidgetLogic() {
     history.push({role,text});
   }
 
-  async function sendMessage(){
-    const text = input.value.trim();
-    if(!text) return;
-    append("user",text);
-    input.value = '';
-    typing.style.display = "block";
-    chatMsgs.scrollTop = chatMsgs.scrollHeight;
 
-    try{
-      const res = await fetch(WEBHOOK_URL,{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({query:text})
-      });
-      const data = await res.json();
-      typing.style.display = "none";
-      append("ai",data.output || "Response received.");
-    }catch(e){
-      typing.style.display = "none";
-      append("ai","Error connecting to server.");
-    }
+  async function sendMessage(){
+  const text = input.value.trim();
+  if(!text) return;
+  append("user", text);
+  input.value = '';
+  typing.style.display = "block";
+
+  try {
+    const res = await fetch(WEBHOOK_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${CLIENT_KEY}`  // add your client key here
+      },
+      body: JSON.stringify({ query: text })
+    });
+
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    typing.style.display = "none";
+    append("ai", data.output || "No response from server.");
+
+  } catch(e) {
+    typing.style.display = "none";
+    append("ai", `Error connecting to server: ${e.message}`);
   }
+}
+
 }
