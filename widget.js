@@ -34,8 +34,6 @@ const widgetHTML = `
       <div class="msg msg-ai">${WELCOME_MSG}</div>
     </div>
 
-    <div class="typing" id="typing">Processing…</div>
-
     <div class="chat-input">
       <input
         type="text"
@@ -45,8 +43,10 @@ const widgetHTML = `
       />
       <button id="send-btn">➤</button>
     </div>
-  </div>
 
+    <div class="typing" id="typing" style="display:none;">Processing…</div>
+
+  </div>
 </div>
 `;
 
@@ -61,152 +61,75 @@ const widgetHTML = `
 })();
 
 // ===============================
-//  STYLES (FIXED INPUT ISSUE)
+//  STYLES
 // ===============================
 function injectStyles() {
   const style = document.createElement("style");
   style.innerHTML = `
-  :root {
-    --brand-purple: ${BRAND_COLOR};
-  }
+  :root { --brand-purple: ${BRAND_COLOR}; }
 
-  #ai-widget, #ai-widget * {
-    box-sizing: border-box;
-    pointer-events: auto !important;
-    font-family: Inter, system-ui, sans-serif;
-  }
+  #ai-widget, #ai-widget * { box-sizing: border-box; font-family: Inter, system-ui, sans-serif; pointer-events: auto !important; }
 
   #chat-trigger {
-    position: fixed;
-    bottom: 30px;
-    right: 30px;
+    position: fixed; bottom: 30px; right: 30px;
     background: var(--brand-purple);
-    color: #fff;
-    border: none;
-    padding: 14px 22px;
-    border-radius: 50px;
-    font-weight: 700;
-    cursor: pointer;
-    z-index: 999999;
+    color: #fff; border: none; padding: 14px 22px;
+    border-radius: 50px; font-weight: 700; cursor: pointer; z-index: 999999;
   }
 
   #chat-window {
-    position: fixed;
-    bottom: 90px;
-    right: 30px;
-    width: 420px;
-    height: 600px;
-    background: #020617;
-    border-radius: 24px;
-    display: none;
-    flex-direction: column;
-    box-shadow: 0 25px 60px rgba(0,0,0,0.5);
-    z-index: 999999;
+    position: fixed; bottom: 90px; right: 30px;
+    width: 420px; height: 600px; background: #020617;
+    border-radius: 24px; display: none; flex-direction: column;
+    box-shadow: 0 25px 60px rgba(0,0,0,0.5); z-index: 999999;
     overflow: hidden;
   }
 
   .chat-header {
-    padding: 16px 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    color: #f8fafc;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
+    padding: 16px 20px; display: flex;
+    justify-content: space-between; align-items: center;
+    color: #f8fafc; border-bottom: 1px solid rgba(255,255,255,0.1);
   }
 
-  .chat-header h4 {
-    margin: 0;
-    font-weight: 700;
-  }
+  .chat-header h4 { margin: 0; font-weight: 700; }
 
-  .status-line {
-    font-size: 11px;
-    color: #94a3b8;
-  }
+  .status-line { font-size: 11px; color: #94a3b8; }
 
-  .status-dot {
-    width: 8px;
-    height: 8px;
-    background: #10b981;
-    border-radius: 50%;
-    display: inline-block;
-    margin-right: 6px;
-  }
+  .status-dot { width: 8px; height: 8px; background: #10b981; border-radius: 50%; display: inline-block; margin-right: 6px; }
 
   .chat-messages {
-    flex: 1;
-    padding: 16px;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
+    flex: 1; padding: 16px; overflow-y: auto;
+    display: flex; flex-direction: column; gap: 12px;
   }
 
-  .msg {
-    padding: 10px 14px;
-    border-radius: 16px;
-    font-size: 14px;
-    max-width: 80%;
-    line-height: 1.5;
-  }
+  .msg { padding: 10px 14px; border-radius: 16px; font-size: 14px; max-width: 80%; line-height: 1.5; }
 
-  .msg-ai {
-    background: #1e293b;
-    color: #f8fafc;
-    align-self: flex-start;
-  }
+  .msg-ai { background: #1e293b; color: #f8fafc; align-self: flex-start; }
 
-  .msg-user {
-    background: var(--brand-purple);
-    color: #ffffff;
-    align-self: flex-end;
-  }
+  .msg-user { background: var(--brand-purple); color: #fff; align-self: flex-end; }
 
-  .typing {
-    display: none;
-    font-size: 12px;
-    color: #94a3b8;
-    padding: 0 16px;
-  }
+  .typing { font-size: 12px; color: #94a3b8; padding: 4px 16px; user-select: none; }
 
   .chat-input {
-    display: flex;
-    gap: 10px;
-    padding: 16px;
-    border-top: 1px solid rgba(255,255,255,0.1);
+    display: flex; gap: 10px; padding: 16px; border-top: 1px solid rgba(255,255,255,0.1);
+    z-index: 2; position: relative;
   }
 
   .chat-input input {
-    flex: 1;
-    padding: 12px 16px;
-    border-radius: 24px;
-    border: 1px solid #334155;
-    outline: none;
-
-    /* 🔑 FIX */
-    background: #0f172a;
-    color: #ffffff;
-    caret-color: #ffffff;
-    font-size: 14px;
+    flex: 1; padding: 12px 16px; border-radius: 24px;
+    border: 1px solid #334155; outline: none;
+    background: #0f172a; color: #fff; caret-color: #fff; font-size: 14px;
+    z-index: 2; position: relative;
   }
 
-  .chat-input input::placeholder {
-    color: #94a3b8;
-    opacity: 1;
-  }
+  .chat-input input::placeholder { color: #94a3b8; }
 
-  .chat-input input:focus {
-    border-color: var(--brand-purple);
-  }
+  .chat-input input:focus { border-color: var(--brand-purple); }
 
   .chat-input button {
-    width: 42px;
-    height: 42px;
-    border-radius: 50%;
-    background: var(--brand-purple);
-    color: #fff;
-    border: none;
-    cursor: pointer;
+    width: 42px; height: 42px; border-radius: 50%;
+    background: var(--brand-purple); color: #fff; border: none; cursor: pointer;
+    z-index: 2; position: relative;
   }
   `;
   document.head.appendChild(style);
@@ -229,12 +152,10 @@ function setupWidgetLogic() {
     setTimeout(() => input.focus(), 50);
   };
 
-  closeBtn.onclick = () => {
-    chatWindow.style.display = "none";
-  };
+  closeBtn.onclick = () => chatWindow.style.display = "none";
 
   sendBtn.onclick = sendMessage;
-  input.onkeydown = e => e.key === "Enter" && sendMessage();
+  input.addEventListener("keydown", e => e.key === "Enter" && sendMessage());
 
   function append(role, text) {
     const div = document.createElement("div");
@@ -251,6 +172,7 @@ function setupWidgetLogic() {
     append("user", text);
     input.value = "";
     typing.style.display = "block";
+    msgs.scrollTop = msgs.scrollHeight;
 
     try {
       const res = await fetch(WEBHOOK_URL, {
