@@ -48,14 +48,22 @@ const widgetHTML = `
 `;
 
 // ===============================
-//  WAIT FOR BODY (Streamlit Fix)
+//  STREAMLIT-SAFE DOM INJECTION
 // ===============================
 function waitForBody(callback) {
     if (document.body) {
         callback();
-    } else {
-        setTimeout(() => waitForBody(callback), 50);
+        return;
     }
+
+    const observer = new MutationObserver(() => {
+        if (document.body) {
+            observer.disconnect();
+            callback();
+        }
+    });
+
+    observer.observe(document.documentElement, { childList: true, subtree: true });
 }
 
 waitForBody(() => {
@@ -194,8 +202,4 @@ function setupWidgetLogic() {
 
             appendMessage("ai", data.output || "No response.");
         } catch {
-            typingLabel.style.display = "none";
-            appendMessage("ai", "Error connecting to server.");
-        }
-    }
-}
+            typingLabel.style.display
